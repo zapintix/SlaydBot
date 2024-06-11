@@ -27,6 +27,32 @@ public class UserDataBase {
         return false;
     }
 
+    public static void registerUser(long telegramUserId, String username) {
+        String sql = "INSERT INTO users (tg_user_id, username) VALUES (?, ?)";
+
+        try (Connection conn = connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setLong(1, telegramUserId);
+            pstmt.setString(2, username);
+            pstmt.executeUpdate();
+
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    public static void unregisterUser(long telegramUserId) {
+        String sql = "DELETE FROM users WHERE tg_user_id = ?";
+
+        try (Connection conn = connect();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setLong(1, telegramUserId);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void saveUserResponse(String telegramName, String response, int photoId) {
         String sql = "INSERT INTO user_responses (username, response, photo_id) VALUES (?, ?, ?)";
 
