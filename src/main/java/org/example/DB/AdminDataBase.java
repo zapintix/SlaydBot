@@ -163,7 +163,6 @@ public class AdminDataBase {
     public static List<List<String>> getReport(int photoId) {
         List<List<String>> result = new ArrayList<>();
         //Метод для получения отчёта
-        //бум бум
         // Получаем ответы пользователей по photoId
         List<String> responses = new ArrayList<>();
         String responsesSql = "SELECT username, response FROM user_responses WHERE photo_id = ?";
