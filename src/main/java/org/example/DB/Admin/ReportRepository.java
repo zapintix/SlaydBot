@@ -1,108 +1,16 @@
-package org.example.DB;
+package org.example.DB.Admin;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AdminDataBase {
-    private static final String URL = "jdbc:postgresql://localhost:5432/Slayd";
-    private static final String USERNAME = "postgres";
-    private static final String PASSWORD = "admin";
-
-    public static Connection connect() throws SQLException {
-        return DriverManager.getConnection(URL, USERNAME, PASSWORD);
-    }
-
-    public static int getPhotoIdByCaption(String caption) {
-        String sql = "SELECT id FROM photos WHERE caption = ?";
-        int photoId = -1;
-
-        try (Connection conn = connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, caption);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    photoId = rs.getInt("id");
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return photoId;
-    }
-
-
-
-    public static String getUserRole(long telegramUserId) {
-        String role = null;
-        String sql = "SELECT role FROM users WHERE tg_user_id = ?";
-
-        try (Connection conn = connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setLong(1, telegramUserId);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    role = rs.getString("role");
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return role;
-    }
-
-    public static void savePhotoInfo(String photoId, String caption) {
-        String sql = "INSERT INTO photos (photo_id, caption) VALUES (?, ?)";
-
-        try (Connection conn = connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, photoId);
-            pstmt.setString(2, caption);
-            pstmt.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-    public static List<Long> getAllRegisteredUsers() {
-        List<Long> userIds = new ArrayList<>();
-        String sql = "SELECT tg_user_id FROM users WHERE role = 'user'";
-
-        try (Connection conn = connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
-            while (rs.next()) {
-                userIds.add(rs.getLong("tg_user_id"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return userIds;
-    }
-
-    public static List<String> getAllSlideIds() {
-        String sql = "SELECT caption FROM photos";
-        List<String> caption = new ArrayList<>();
-        try (Connection conn = connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
-            while (rs.next()) {
-                caption.add(rs.getString("caption"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return caption;
-    }
-
+public class ReportRepository {
     public static List<List<String>> getReport(int photoId) {
         List<List<String>> result = new ArrayList<>();
-        //Метод для получения отчёта
-        // Получаем ответы пользователей по photoId
+        // Get user responses for photoId
         List<String> responses = new ArrayList<>();
         String responsesSql = "SELECT username, response FROM user_responses WHERE photo_id = ?";
-        try (Connection conn = connect();
+        try (Connection conn = AdminDataBase.connect();
              PreparedStatement pstmt = conn.prepareStatement(responsesSql)) {
             pstmt.setInt(1, photoId);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -117,10 +25,10 @@ public class AdminDataBase {
         }
         result.add(responses);
 
-        // Получаем вопросы пользователей по photoId
+        // Get user questions for photoId
         List<String> questions = new ArrayList<>();
         String questionsSql = "SELECT username, question FROM user_questions WHERE photo_id = ?";
-        try (Connection conn = connect();
+        try (Connection conn = AdminDataBase.connect();
              PreparedStatement pstmt = conn.prepareStatement(questionsSql)) {
             pstmt.setInt(1, photoId);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -135,10 +43,10 @@ public class AdminDataBase {
         }
         result.add(questions);
 
-        // Получаем оценки по photoId
+        // Get ratings for photoId
         List<String> ratings = new ArrayList<>();
         String ratingsSql = "SELECT rating FROM message_ratings WHERE photo_id = ?";
-        try (Connection conn = connect();
+        try (Connection conn = AdminDataBase.connect();
              PreparedStatement pstmt = conn.prepareStatement(ratingsSql)) {
             pstmt.setInt(1, photoId);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -163,30 +71,11 @@ public class AdminDataBase {
         return result;
     }
 
-    public static String getPhotoUrl(int photoId) {
-        String sql = "SELECT photo_id FROM photos WHERE id = ?";
-        String photoUrl = null;
-
-        try (Connection conn = connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, photoId);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    photoUrl = rs.getString("photo_id");
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return photoUrl;
-    }
-
     public static int getSlideWithMostResponses() {
         String sql = "SELECT photo_id FROM user_responses GROUP BY photo_id ORDER BY COUNT(response) DESC LIMIT 1";
         int photoId = -1;
 
-        try (Connection conn = connect();
+        try (Connection conn = AdminDataBase.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
             if (rs.next()) {
@@ -203,7 +92,7 @@ public class AdminDataBase {
         String sql = "SELECT photo_id FROM user_questions GROUP BY photo_id ORDER BY COUNT(question) DESC LIMIT 1";
         int photoId = -1;
 
-        try (Connection conn = connect();
+        try (Connection conn = AdminDataBase.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
             if (rs.next()) {
@@ -220,7 +109,7 @@ public class AdminDataBase {
         String sql = "SELECT photo_id FROM message_ratings GROUP BY photo_id ORDER BY COUNT(rating) DESC LIMIT 1";
         int photoId = -1;
 
-        try (Connection conn = connect();
+        try (Connection conn = AdminDataBase.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
             if (rs.next()) {
@@ -237,7 +126,7 @@ public class AdminDataBase {
         String sql = "SELECT photo_id FROM message_ratings GROUP BY photo_id ORDER BY AVG(rating) DESC LIMIT 1";
         int photoId = -1;
 
-        try (Connection conn = connect();
+        try (Connection conn = AdminDataBase.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql);
              ResultSet rs = pstmt.executeQuery()) {
             if (rs.next()) {
@@ -253,7 +142,7 @@ public class AdminDataBase {
     public static List<String> getRatings(int photoId) {
         List<String> ratings = new ArrayList<>();
         String sql = "SELECT rating FROM message_ratings WHERE photo_id = ?";
-        try (Connection conn = connect();
+        try (Connection conn = AdminDataBase.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, photoId);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -267,17 +156,17 @@ public class AdminDataBase {
         return ratings;
     }
 
-    public static List<String>  getQuestions(int photoId) {
+    public static List<String> getQuestions(int photoId) {
         List<String> questions = new ArrayList<>();
-        String sql = "SELECT question, username  FROM user_questions WHERE photo_id = ?";
-        try (Connection conn = connect();
+        String sql = "SELECT question, username FROM user_questions WHERE photo_id = ?";
+        try (Connection conn = AdminDataBase.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, photoId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     String question = rs.getString("question");
                     String username = rs.getString("username");
-                    questions.add(username + ": "+question);
+                    questions.add(username + ": " + question);
                 }
             }
         } catch (SQLException e) {
@@ -289,14 +178,14 @@ public class AdminDataBase {
     public static List<String> getResponses(int photoId) {
         List<String> responses = new ArrayList<>();
         String sql = "SELECT response, username FROM user_responses WHERE photo_id = ?";
-        try (Connection conn = connect();
+        try (Connection conn = AdminDataBase.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, photoId);
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
                     String response = rs.getString("response");
                     String username = rs.getString("username");
-                    responses.add(username + ": "+response);
+                    responses.add(username + ": " + response);
                 }
             }
         } catch (SQLException e) {
@@ -308,7 +197,7 @@ public class AdminDataBase {
     public static double getAverageRating(int photoId) {
         String sql = "SELECT AVG(rating) as avg_rating FROM message_ratings WHERE photo_id = ?";
         double averageRating = 0.0;
-        try (Connection conn = connect();
+        try (Connection conn = AdminDataBase.connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, photoId);
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -321,25 +210,4 @@ public class AdminDataBase {
         }
         return averageRating;
     }
-
-    public static String getCaptionByPhotoId(int photoId) {
-        String sql = "SELECT caption FROM photos WHERE id = ?";
-        String caption = "";
-        try (Connection conn = connect();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, photoId);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    caption = rs.getString("caption");
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return caption;
-    }
-
 }
-
-
-

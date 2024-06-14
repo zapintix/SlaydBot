@@ -1,7 +1,5 @@
 package org.example.bot;
 
-import org.example.DB.AdminDataBase;
-import org.example.DB.UserDataBase;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
@@ -12,17 +10,25 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.example.DB.AdminDataBase.*;
-import static org.example.DB.UserDataBase.*;
+import static org.example.DB.Admin.PhotoRepository.*;
+import static org.example.DB.Admin.ReportRepository.getReport;
+import static org.example.DB.Admin.UserRepository.getAllRegisteredUsers;
+import static org.example.DB.Admin.UserRepository.getUserRole;
+import static org.example.DB.User.Register.*;
+import static org.example.DB.User.SavaReport.*;
 
 public class TelegramBot extends TelegramLongPollingBot {
 
     private final KeyboardBuilder keyboardBuilder = new KeyboardBuilder();
-    private final UserDataBase userDataBase = new UserDataBase();
+    private ReportHandler reportHandler;
+
+    public void setReportHandler(ReportHandler reportHandler) {
+        this.reportHandler = reportHandler; // Метод для установки обработчика отчетов
+    }
+
+
     @Override
     public void onUpdateReceived(Update update) {
         Message message = update.getMessage();
@@ -65,7 +71,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 sendMessage.setReplyMarkup(keyboardBuilder.getMainUserKeyboard());
                 long telegramUserId = message.getFrom().getId();
                 String username = message.getFrom().getFirstName();
-                if (userDataBase.isUserRegistered(telegramUserId)) {
+                if (isUserRegistered(telegramUserId)) {
                     sendMessage.setChatId(message.getChatId().toString());
                     sendMessage.setText("Ошибка. Вы уже зарегистрированы");
 
@@ -82,7 +88,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }else if("/unregister".equals(command)){
                 sendMessage.setReplyMarkup(keyboardBuilder.getMainNotUserKeyboard());
                 long telegramUserId = message.getFrom().getId();
-                if (userDataBase.isUserRegistered(telegramUserId)) {
+                if (isUserRegistered(telegramUserId)) {
                     unregisterUser(telegramUserId);
                     sendMessage.setChatId(message.getChatId().toString());
                     sendMessage.setText("Вы успешно УДАЛЕНЫ ИЗ ЭТОГО МИРА!");
@@ -99,7 +105,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 sendMessage.setChatId(message.getChatId().toString());
                 sendMessage.setText("Добро пожаловать!");
                 long telegramUserId = message.getFrom().getId();
-                if (userDataBase.isUserRegistered(telegramUserId)) {
+                if (isUserRegistered(telegramUserId)) {
                     if ("user".equals(getUserRole(telegramUserId))) {
                         sendMessage.setReplyMarkup(keyboardBuilder.getMainUserKeyboard());
                     } else {
@@ -117,7 +123,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             } else if ("/slays".equals(command)) {
                 long telegramUserId = message.getFrom().getId();
                 if ("admin".equals(getUserRole(telegramUserId))) {
-                    List<String> captions = AdminDataBase.getAllSlideIds();
+                    List<String> captions = getAllSlideIds();
                     if (captions.isEmpty()) {
                         sendMessage.setChatId(message.getChatId().toString());
                         sendMessage.setText("Нет доступных слайдов!");
@@ -154,13 +160,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                     }
                 }
             }else if("/most_ratings".equals(command)){
-                handleMostRatingsCommand(message, sendMessage);
+                reportHandler.handleMostRatingsCommand(message, sendMessage);
             }else if("/most_question".equals(command)){
-                handleMostQuestionCommand(message, sendMessage);
+                reportHandler.handleMostQuestionCommand(message, sendMessage);
             }else if("/most_response".equals(command)){
-                handleMostResponseCommand(message, sendMessage);
+                reportHandler.handleMostResponseCommand(message, sendMessage);
             }else if("/height_ratings".equals(command)){
-                handleHighestRatingsCommand(message, sendMessage);
+                reportHandler.handleHighestRatingsCommand(message, sendMessage);
             }
 
 
@@ -172,7 +178,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     String photoId = message.getPhoto().get(0).getFileId();
                     savePhotoInfo(photoId, caption);
                     InputFile photo = new InputFile(photoId);
-                    List<Long> userIds = AdminDataBase.getAllRegisteredUsers();
+                    List<Long> userIds = getAllRegisteredUsers();
                     for (Long userId : userIds) {
                         SendPhoto sendPhoto = new SendPhoto();
                         sendPhoto.setChatId(userId.toString());
@@ -199,9 +205,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         String[] parts = data.split("_");
         if (parts[0].equals("report")) {
             String caption = parts[1];
-            int photoId = AdminDataBase.getPhotoIdByCaption(caption);
-            List<List<String>> report = AdminDataBase.getReport(photoId);
-            String photoUrl = AdminDataBase.getPhotoUrl(photoId);
+            int photoId = getPhotoIdByCaption(caption);
+            List<List<String>> report = getReport(photoId);
+            String photoUrl = getPhotoUrl(photoId);
 
             StringBuilder reportMessage = new StringBuilder();
             reportMessage.append("Отчет по слайду: ").append(caption).append("\n\n");
@@ -233,159 +239,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
         }
     }
-    private void handleMostRatingsCommand(Message message, SendMessage sendMessage) {
-        int photoId = AdminDataBase.getSlideWithMostRatings();
-        int count = 0;
-        if (photoId != -1) {
-            List<String> ratings = AdminDataBase.getRatings(photoId);
-            String photoUrl = AdminDataBase.getPhotoUrl(photoId);
-            String caption = AdminDataBase.getCaptionByPhotoId(photoId);
-
-            StringBuilder reportMessage = new StringBuilder();
-            reportMessage.append("Слайд с самым большим количеством оценок: ").append(caption).append("\n\n");
-
-            reportMessage.append("Оценки:\n");
-            for (String rating : ratings) {
-                reportMessage.append(rating).append(" ");
-                count++;
-            }
-            reportMessage.append("\nКол-во оценок:\n");
-            reportMessage.append(count);
-
-            SendPhoto sendPhoto = new SendPhoto();
-            sendPhoto.setChatId(message.getChatId().toString());
-            sendPhoto.setPhoto(new InputFile(photoUrl));
-            sendPhoto.setCaption(reportMessage.toString());
-
-            try {
-                execute(sendPhoto);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-        } else {
-            sendMessage.setChatId(message.getChatId().toString());
-            sendMessage.setText("Не удалось найти слайд с оценками.");
-            try {
-                execute(sendMessage);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void handleMostQuestionCommand(Message message, SendMessage sendMessage) {
-        int photoId = AdminDataBase.getSlideWithMostQuestions();
-        if (photoId != -1) {
-            List<String> questions = AdminDataBase.getQuestions(photoId);
-            String photoUrl = AdminDataBase.getPhotoUrl(photoId);
-            String caption = AdminDataBase.getCaptionByPhotoId(photoId);
-
-            StringBuilder reportMessage = new StringBuilder();
-            reportMessage.append("Слайд с самым большим количеством вопросов: ").append(caption).append("\n\n");
-
-            reportMessage.append("Вопросы:\n");
-            for (String question : questions) {
-                reportMessage.append(question).append("\n");
-            }
-
-            SendPhoto sendPhoto = new SendPhoto();
-            sendPhoto.setChatId(message.getChatId().toString());
-            sendPhoto.setPhoto(new InputFile(photoUrl));
-            sendPhoto.setCaption(reportMessage.toString());
-
-            try {
-                execute(sendPhoto);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-        } else {
-            sendMessage.setChatId(message.getChatId().toString());
-            sendMessage.setText("Не удалось найти слайд с вопросами.");
-            try {
-                execute(sendMessage);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void handleMostResponseCommand(Message message, SendMessage sendMessage) {
-        int photoId = AdminDataBase.getSlideWithMostResponses();
-        if (photoId != -1) {
-            List<String> responses = AdminDataBase.getResponses(photoId);
-            String photoUrl = AdminDataBase.getPhotoUrl(photoId);
-            String caption = AdminDataBase.getCaptionByPhotoId(photoId);
-
-            StringBuilder reportMessage = new StringBuilder();
-            reportMessage.append("Слайд с самым большим количеством ответов: ").append(caption).append("\n\n");
-
-            reportMessage.append("Ответы:\n");
-            for (String response : responses) {
-                reportMessage.append(response).append("\n");
-            }
-
-            SendPhoto sendPhoto = new SendPhoto();
-            sendPhoto.setChatId(message.getChatId().toString());
-            sendPhoto.setPhoto(new InputFile(photoUrl));
-            sendPhoto.setCaption(reportMessage.toString());
-
-            try {
-                execute(sendPhoto);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-        } else {
-            sendMessage.setChatId(message.getChatId().toString());
-            sendMessage.setText("Не удалось найти слайд с ответами.");
-            try {
-                execute(sendMessage);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void handleHighestRatingsCommand(Message message, SendMessage sendMessage) {
-        int photoId = AdminDataBase.getSlideWithHighestAverageRating();
-        if (photoId != -1) {
-            List<String> ratings = AdminDataBase.getRatings(photoId);
-            String photoUrl = AdminDataBase.getPhotoUrl(photoId);
-            String caption = AdminDataBase.getCaptionByPhotoId(photoId);
-
-            double averageRating = AdminDataBase.getAverageRating(photoId);
-
-            StringBuilder reportMessage = new StringBuilder();
-            reportMessage.append("Слайд с самой высокой средней оценкой: ").append(caption).append("\n\n");
-
-            reportMessage.append("Средняя оценка: ").append(String.format("%.2f", averageRating)).append("\n\n");
-
-            reportMessage.append("Оценки:\n");
-            for (String rating : ratings) {
-                reportMessage.append(rating).append(" ");
-            }
-
-            SendPhoto sendPhoto = new SendPhoto();
-            sendPhoto.setChatId(message.getChatId().toString());
-            sendPhoto.setPhoto(new InputFile(photoUrl));
-            sendPhoto.setCaption(reportMessage.toString());
-
-            try {
-                execute(sendPhoto);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-        } else {
-            sendMessage.setChatId(message.getChatId().toString());
-            sendMessage.setText("Не удалось найти слайд с оценками.");
-            try {
-                execute(sendMessage);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-
 
 
     @Override
