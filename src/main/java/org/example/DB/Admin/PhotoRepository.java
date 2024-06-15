@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class PhotoRepository {
-    public static int getPhotoIdByCaption(String caption) {
+public class PhotoRepository implements PhotoDAO {
+    public int getPhotoIdByCaption(String caption) {
         String sql = "SELECT id FROM photos WHERE caption = ?";
         int photoId = -1;
 
@@ -28,7 +28,7 @@ public class PhotoRepository {
         return photoId;
     }
 
-    public static void savePhotoInfo(String photoId, String caption) {
+    public void savePhotoInfo(String photoId, String caption) {
         String sql = "INSERT INTO photos (photo_id, caption) VALUES (?, ?)";
 
         try (Connection conn = AdminDataBase.connect();
@@ -41,7 +41,7 @@ public class PhotoRepository {
         }
     }
 
-    public static String getPhotoUrl(int photoId) {
+    public String getPhotoUrl(int photoId) {
         String sql = "SELECT photo_id FROM photos WHERE id = ?";
         String photoUrl = null;
 
@@ -60,7 +60,7 @@ public class PhotoRepository {
         return photoUrl;
     }
 
-    public static String getCaptionByPhotoId(int photoId) {
+    public String getCaptionByPhotoId(int photoId) {
         String sql = "SELECT caption FROM photos WHERE id = ?";
         String caption = "";
         try (Connection conn = AdminDataBase.connect();
@@ -77,7 +77,7 @@ public class PhotoRepository {
         return caption;
     }
 
-    public static List<String> getAllSlideIds() {
+    public List<String> getAllSlideIds() {
         String sql = "SELECT caption FROM photos";
         List<String> captions = new ArrayList<>();
         try (Connection conn = AdminDataBase.connect();
