@@ -1,10 +1,5 @@
 package org.example.bot;
 
-import org.example.DB.Admin.*;
-import org.example.DB.User.Register;
-import org.example.DB.User.RegisterDAO;
-import org.example.DB.User.SavaReport;
-import org.example.DB.User.SavaReportDAO;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
@@ -14,35 +9,32 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.example.DB.Admin.PhotoRepository.*;
+import static org.example.DB.Admin.ReportRepository.*;
+import static org.example.DB.Admin.UserRepository.getAllRegisteredUsers;
+import static org.example.DB.Admin.UserRepository.getUserRole;
 
 public class AdminReportHandler {
     private final TelegramBot bot;
-    private final PhotoDAO photoDAO;
-    private final ReportDAO reportDAO;
-    private final RegisterDAO registerDAO;
-    private final SavaReportDAO savaReportDAO;
-    private final UserDAO userDAO;
+
     public AdminReportHandler(TelegramBot bot) {
         this.bot = bot;
-        this.photoDAO = new PhotoRepository();
-        this.reportDAO = new ReportRepository();
-        this.registerDAO = new Register();
-        this.savaReportDAO = new SavaReport();
-        this.userDAO =  new UserRepository(); // initialize userDAO here
     }
+
 
     public void handleMostRatingsCommand(Message message, SendMessage sendMessage) {
         long telegramUserId = message.getFrom().getId();
-        if ("admin".equals(userDAO.getUserRole(telegramUserId))) {
-            int photoId = reportDAO.getSlideWithMostRatings();
+        if ("admin".equals(getUserRole(telegramUserId))) {
+            int photoId = getSlideWithMostRatings();
             int count = 0;
             if (photoId != -1) {
-                List<String> ratings = reportDAO.getRatings(photoId);
-                String photoUrl = photoDAO.getPhotoUrl(photoId);
-                String caption = photoDAO.getCaptionByPhotoId(photoId);
+                List<String> ratings = getRatings(photoId);
+                String photoUrl = getPhotoUrl(photoId);
+                String caption = getCaptionByPhotoId(photoId);
 
                 StringBuilder reportMessage = new StringBuilder();
                 reportMessage.append("Слайд с самым большим количеством оценок: ").append(caption).append("\n\n");
@@ -89,12 +81,12 @@ public class AdminReportHandler {
 
     public void handleMostQuestionCommand(Message message, SendMessage sendMessage) {
         long telegramUserId = message.getFrom().getId();
-        if ("admin".equals(userDAO.getUserRole(telegramUserId))) {
-            int photoId = reportDAO.getSlideWithMostQuestions();
+        if ("admin".equals(getUserRole(telegramUserId))) {
+            int photoId = getSlideWithMostQuestions();
             if (photoId != -1) {
-                List<String> questions = reportDAO.getQuestions(photoId);
-                String photoUrl = photoDAO.getPhotoUrl(photoId);
-                String caption = photoDAO.getCaptionByPhotoId(photoId);
+                List<String> questions = getQuestions(photoId);
+                String photoUrl = getPhotoUrl(photoId);
+                String caption = getCaptionByPhotoId(photoId);
 
                 StringBuilder reportMessage = new StringBuilder();
                 reportMessage.append("Слайд с самым большим количеством вопросов: ").append(caption).append("\n\n");
@@ -137,12 +129,12 @@ public class AdminReportHandler {
 
     public void handleMostResponseCommand(Message message, SendMessage sendMessage) {
         long telegramUserId = message.getFrom().getId();
-        if ("admin".equals(userDAO.getUserRole(telegramUserId))) {
-            int photoId = reportDAO.getSlideWithMostResponses();
+        if ("admin".equals(getUserRole(telegramUserId))) {
+            int photoId = getSlideWithMostResponses();
             if (photoId != -1) {
-                List<String> responses = reportDAO.getResponses(photoId);
-                String photoUrl = photoDAO.getPhotoUrl(photoId);
-                String caption = photoDAO.getCaptionByPhotoId(photoId);
+                List<String> responses = getResponses(photoId);
+                String photoUrl = getPhotoUrl(photoId);
+                String caption = getCaptionByPhotoId(photoId);
 
                 StringBuilder reportMessage = new StringBuilder();
                 reportMessage.append("Слайд с самым большим количеством ответов: ").append(caption).append("\n\n");
@@ -185,14 +177,14 @@ public class AdminReportHandler {
 
     public void handleHighestRatingsCommand(Message message, SendMessage sendMessage) {
         long telegramUserId = message.getFrom().getId();
-        if ("admin".equals(userDAO.getUserRole(telegramUserId))) {
-            int photoId = reportDAO.getSlideWithHighestAverageRating();
+        if ("admin".equals(getUserRole(telegramUserId))) {
+            int photoId = getSlideWithHighestAverageRating();
             if (photoId != -1) {
-                List<String> ratings = reportDAO.getRatings(photoId);
-                String photoUrl = photoDAO.getPhotoUrl(photoId);
-                String caption = photoDAO.getCaptionByPhotoId(photoId);
+                List<String> ratings = getRatings(photoId);
+                String photoUrl = getPhotoUrl(photoId);
+                String caption = getCaptionByPhotoId(photoId);
 
-                double averageRating = reportDAO.getAverageRating(photoId);
+                double averageRating = getAverageRating(photoId);
 
                 StringBuilder reportMessage = new StringBuilder();
                 reportMessage.append("Слайд с самой высокой средней оценкой: ").append(caption).append("\n\n");
@@ -236,8 +228,8 @@ public class AdminReportHandler {
     }
     public void SlaysReportCommand(Message message, SendMessage sendMessage) {
         long telegramUserId = message.getFrom().getId();
-        if ("admin".equals(userDAO.getUserRole(telegramUserId))) {
-            List<String> captions = photoDAO.getAllSlideIds();
+        if ("admin".equals(getUserRole(telegramUserId))) {
+            List<String> captions = getAllSlideIds();
             if (captions.isEmpty()) {
                 sendMessage.setChatId(message.getChatId().toString());
                 sendMessage.setText("Нет доступных слайдов!");
@@ -278,12 +270,12 @@ public class AdminReportHandler {
     public void SendPhotoToUsers(Message message, Update update){
         long telegramUserId = message.getFrom().getId();
         String caption = update.getMessage().getCaption();
-        if ("admin".equals(userDAO.getUserRole(telegramUserId))) {
+        if ("admin".equals(getUserRole(telegramUserId))) {
             if (!message.getPhoto().isEmpty()) {
                 String photoId = message.getPhoto().get(0).getFileId();
-                photoDAO.savePhotoInfo(photoId, caption);
+                savePhotoInfo(photoId, caption);
                 InputFile photo = new InputFile(photoId);
-                List<Long> userIds = userDAO.getAllRegisteredUsers();
+                List<Long> userIds = getAllRegisteredUsers();
                 for (Long userId : userIds) {
                     SendPhoto sendPhoto = new SendPhoto();
                     sendPhoto.setChatId(userId.toString());
@@ -307,9 +299,9 @@ public class AdminReportHandler {
         String[] parts = data.split("_");
         if (parts[0].equals("report")) {
             String caption = parts[1];
-            int photoId = photoDAO.getPhotoIdByCaption(caption);
-            List<List<String>> report = reportDAO.getReport(photoId);
-            String photoUrl = photoDAO.getPhotoUrl(photoId);
+            int photoId = getPhotoIdByCaption(caption);
+            List<List<String>> report = getReport(photoId);
+            String photoUrl = getPhotoUrl(photoId);
 
             StringBuilder reportMessage = new StringBuilder();
             reportMessage.append("Отчет по слайду: ").append(caption).append("\n\n");

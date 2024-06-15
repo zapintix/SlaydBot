@@ -1,10 +1,6 @@
 package org.example.bot;
 
-import org.example.DB.Admin.PhotoDAO;
-import org.example.DB.Admin.ReportDAO;
-import org.example.DB.Admin.UserDAO;
-import org.example.DB.User.RegisterDAO;
-import org.example.DB.User.SavaReportDAO;
+import org.checkerframework.checker.units.qual.K;
 import org.example.Mediator.Mediator;
 import org.example.Mediator.TelegramBotMediator;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -17,11 +13,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     private Mediator mediator;
     private UserCommands userCommands;
     private KeyboardBuilder keyboardBuilder;
-    private PhotoDAO photoDAO;
-    private ReportDAO reportDAO;
-    private RegisterDAO registerDAO;
-    private SavaReportDAO savaReportDAO;
-    private UserDAO userDAO;
     public TelegramBot() {
         adminReportHandler = new AdminReportHandler(this);
         userCommands = new UserCommands(this);
@@ -29,6 +20,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         mediator = new TelegramBotMediator (this, adminReportHandler,userCommands, keyboardBuilder);
 
     }
+
+
 
     @Override
     public void onUpdateReceived(Update update) {

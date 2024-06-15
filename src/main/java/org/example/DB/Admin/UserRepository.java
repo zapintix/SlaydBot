@@ -4,8 +4,8 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UserRepository implements UserDAO {
-    public String getUserRole(long telegramUserId) {
+public class UserRepository {
+    public static String getUserRole(long telegramUserId) {
         String role = null;
         String sql = "SELECT role FROM users WHERE tg_user_id = ?";
 
@@ -24,7 +24,7 @@ public class UserRepository implements UserDAO {
         return role;
     }
 
-    public List<Long> getAllRegisteredUsers() {
+    public static List<Long> getAllRegisteredUsers() {
         List<Long> userIds = new ArrayList<>();
         String sql = "SELECT tg_user_id FROM users WHERE role = 'user'";
 

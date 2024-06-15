@@ -4,8 +4,8 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReportRepository implements ReportDAO {
-    public List<List<String>> getReport(int photoId) {
+public class ReportRepository {
+    public static List<List<String>> getReport(int photoId) {
         List<List<String>> result = new ArrayList<>();
         // Get user responses for photoId
         List<String> responses = new ArrayList<>();
@@ -71,7 +71,7 @@ public class ReportRepository implements ReportDAO {
         return result;
     }
 
-    public int getSlideWithMostResponses() {
+    public static int getSlideWithMostResponses() {
         String sql = "SELECT photo_id FROM user_responses GROUP BY photo_id ORDER BY COUNT(response) DESC LIMIT 1";
         int photoId = -1;
 
@@ -88,7 +88,7 @@ public class ReportRepository implements ReportDAO {
         return photoId;
     }
 
-    public int getSlideWithMostQuestions() {
+    public static int getSlideWithMostQuestions() {
         String sql = "SELECT photo_id FROM user_questions GROUP BY photo_id ORDER BY COUNT(question) DESC LIMIT 1";
         int photoId = -1;
 
@@ -105,7 +105,7 @@ public class ReportRepository implements ReportDAO {
         return photoId;
     }
 
-    public int getSlideWithMostRatings() {
+    public static int getSlideWithMostRatings() {
         String sql = "SELECT photo_id FROM message_ratings GROUP BY photo_id ORDER BY COUNT(rating) DESC LIMIT 1";
         int photoId = -1;
 
@@ -122,7 +122,7 @@ public class ReportRepository implements ReportDAO {
         return photoId;
     }
 
-    public int getSlideWithHighestAverageRating() {
+    public static int getSlideWithHighestAverageRating() {
         String sql = "SELECT photo_id FROM message_ratings GROUP BY photo_id ORDER BY AVG(rating) DESC LIMIT 1";
         int photoId = -1;
 
@@ -139,9 +139,7 @@ public class ReportRepository implements ReportDAO {
         return photoId;
     }
 
-
-
-    public List<String> getRatings(int photoId) {
+    public static List<String> getRatings(int photoId) {
         List<String> ratings = new ArrayList<>();
         String sql = "SELECT rating FROM message_ratings WHERE photo_id = ?";
         try (Connection conn = AdminDataBase.connect();
@@ -158,7 +156,7 @@ public class ReportRepository implements ReportDAO {
         return ratings;
     }
 
-    public List<String> getQuestions(int photoId) {
+    public static List<String> getQuestions(int photoId) {
         List<String> questions = new ArrayList<>();
         String sql = "SELECT question, username FROM user_questions WHERE photo_id = ?";
         try (Connection conn = AdminDataBase.connect();
@@ -177,7 +175,7 @@ public class ReportRepository implements ReportDAO {
         return questions;
     }
 
-    public List<String> getResponses(int photoId) {
+    public static List<String> getResponses(int photoId) {
         List<String> responses = new ArrayList<>();
         String sql = "SELECT response, username FROM user_responses WHERE photo_id = ?";
         try (Connection conn = AdminDataBase.connect();
@@ -196,7 +194,7 @@ public class ReportRepository implements ReportDAO {
         return responses;
     }
 
-    public  double getAverageRating(int photoId) {
+    public static double getAverageRating(int photoId) {
         String sql = "SELECT AVG(rating) as avg_rating FROM message_ratings WHERE photo_id = ?";
         double averageRating = 0.0;
         try (Connection conn = AdminDataBase.connect();
@@ -212,5 +210,4 @@ public class ReportRepository implements ReportDAO {
         }
         return averageRating;
     }
-
 }
