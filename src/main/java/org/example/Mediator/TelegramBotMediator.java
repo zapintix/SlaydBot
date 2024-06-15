@@ -53,23 +53,18 @@ public class TelegramBotMediator implements Mediator {
     public void welcomeMessage(Message message, SendMessage sendMessage) {
         userCommands.WelcomeMessage(message, sendMessage);
     }
-    @Override
     public void handleMostRatingsCommand(Message message, SendMessage sendMessage) {
         adminReportHandler.handleMostRatingsCommand(message, sendMessage);
     }
-    @Override
     public  void handleMostQuestionCommand(Message message, SendMessage sendMessage) {
         adminReportHandler.handleMostQuestionCommand(message, sendMessage);
     }
-    @Override
     public void handleMostResponseCommand(Message message, SendMessage sendMessage){
         adminReportHandler.handleMostResponseCommand(message, sendMessage);
     }
-    @Override
     public void handleHighestRatingsCommand(Message message, SendMessage sendMessage){
         adminReportHandler.handleHighestRatingsCommand(message, sendMessage);
     }
-    @Override
     public void slaysReportCommand(Message message, SendMessage sendMessage){
         adminReportHandler.SlaysReportCommand(message, sendMessage);
     }

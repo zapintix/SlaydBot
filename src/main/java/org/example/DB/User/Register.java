@@ -7,9 +7,9 @@ import java.sql.SQLException;
 
 import static org.example.DB.User.UserDataBase.connect;
 
-public class Register {
+public class Register implements RegisterDAO {
 
-    public static boolean isUserRegistered(long telegramUserId) {
+    public boolean isUserRegistered(long telegramUserId)  {
         String sql = "SELECT COUNT(*) FROM users WHERE tg_user_id = ?";
         try (Connection conn = connect();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -24,7 +24,7 @@ public class Register {
         return false;
     }
 
-    public static void registerUser(long telegramUserId, String username) {
+    public void registerUser(long telegramUserId, String username) {
         String sql = "INSERT INTO users (tg_user_id, username) VALUES (?, ?)";
 
         try (Connection conn = connect();
@@ -38,7 +38,7 @@ public class Register {
             e.printStackTrace();
         }
     }
-    public static void unregisterUser(long telegramUserId) {
+    public void unregisterUser(long telegramUserId) {
         String sql = "DELETE FROM users WHERE tg_user_id = ?";
 
         try (Connection conn = connect();

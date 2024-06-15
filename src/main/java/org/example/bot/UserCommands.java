@@ -1,30 +1,39 @@
 package org.example.bot;
-
+import org.example.DB.Admin.*;
+import org.example.DB.User.Register;
+import org.example.DB.User.RegisterDAO;
+import org.example.DB.User.SavaReport;
+import org.example.DB.User.SavaReportDAO;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import static org.example.DB.Admin.PhotoRepository.getPhotoIdByCaption;
-import static org.example.DB.Admin.UserRepository.getUserRole;
-import static org.example.DB.User.Register.*;
-import static org.example.DB.User.SavaReport.*;
-
 public class UserCommands {
     private final TelegramBot bot;
+    private final PhotoDAO photoDAO;
+    private final ReportDAO reportDAO;
+    private final RegisterDAO registerDAO;
+    private final SavaReportDAO savaReportDAO;
+    private final UserDAO userDAO;
     private final KeyboardBuilder keyboardBuilder = new KeyboardBuilder();
 
     public UserCommands(TelegramBot bot) {
         this.bot = bot;
+        this.photoDAO = new PhotoRepository();
+        this.reportDAO = new ReportRepository();
+        this.registerDAO = new Register();
+        this.savaReportDAO = new SavaReport();
+        this.userDAO = new UserRepository();
     }
     public void RegisterCommand(Message message, SendMessage sendMessage){
         sendMessage.setReplyMarkup(keyboardBuilder.getMainUserKeyboard());
         long telegramUserId = message.getFrom().getId();
         String username = message.getFrom().getFirstName();
-        if (isUserRegistered(telegramUserId)) {
+        if (registerDAO.isUserRegistered(telegramUserId)) {
             sendMessage.setChatId(message.getChatId().toString());
             sendMessage.setText("Ошибка. Вы уже зарегистрированы");
 
         } else {
-            registerUser(telegramUserId, username);
+            registerDAO.registerUser(telegramUserId, username);
             sendMessage.setChatId(message.getChatId().toString());
             sendMessage.setText("Вы успешно зарегистрированы!");
         }
@@ -38,8 +47,8 @@ public class UserCommands {
     public void UnregisterCommand(Message message, SendMessage sendMessage){
         sendMessage.setReplyMarkup(keyboardBuilder.getMainNotUserKeyboard());
         long telegramUserId = message.getFrom().getId();
-        if (isUserRegistered(telegramUserId)) {
-            unregisterUser(telegramUserId);
+        if (registerDAO.isUserRegistered(telegramUserId)) {
+            registerDAO.unregisterUser(telegramUserId);
             sendMessage.setChatId(message.getChatId().toString());
             sendMessage.setText("Вы успешно УДАЛЕНЫ ИЗ ЭТОГО МИРА!");
         }else{
@@ -57,19 +66,19 @@ public class UserCommands {
         String response = message.getText();
         String caption = message.getReplyToMessage().getCaption();
 
-        int photoId = getPhotoIdByCaption(caption);
+        int photoId = photoDAO.getPhotoIdByCaption(caption);
         if(photoId!=-1) {
             if(response.length()==1 && response.matches("[1-5]")){
                 int rating = Integer.parseInt(response);
-                savePhotoRating(photoId,rating);
+                savaReportDAO.savePhotoRating(photoId,rating);
                 sendMessage.setChatId(message.getChatId().toString());
                 sendMessage.setText("Оценка: '" + rating + "'\nУспешно сохранена");
             }else if (response.endsWith("?")){
-                saveUserQuestion(telegramName, response, photoId);
+                savaReportDAO.saveUserQuestion(telegramName, response, photoId);
                 sendMessage.setChatId(message.getChatId().toString());
                 sendMessage.setText("Вопрос: '" + response + "'\nУспешно сохранён");
             }else{
-                saveUserResponse(telegramName, response, photoId);
+                savaReportDAO.saveUserResponse(telegramName, response, photoId);
                 sendMessage.setChatId(message.getChatId().toString());
                 sendMessage.setText("Ответ: '" + response + "'\nУспешно сохранён");
             }
@@ -89,8 +98,8 @@ public class UserCommands {
         sendMessage.setChatId(message.getChatId().toString());
         sendMessage.setText("Добро пожаловать!");
         long telegramUserId = message.getFrom().getId();
-        if (isUserRegistered(telegramUserId)) {
-            if ("user".equals(getUserRole(telegramUserId))) {
+        if (registerDAO.isUserRegistered(telegramUserId)) {
+            if ("user".equals(userDAO.getUserRole(telegramUserId))) {
                 sendMessage.setReplyMarkup(keyboardBuilder.getMainUserKeyboard());
             } else {
                 sendMessage.setReplyMarkup(keyboardBuilder.getMainAdminKeyboard());
