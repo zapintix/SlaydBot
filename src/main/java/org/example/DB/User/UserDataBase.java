@@ -11,4 +11,3 @@ public class UserDataBase {
         return DriverManager.getConnection(URL, USERNAME, PASSWORD);
     }
 }
-

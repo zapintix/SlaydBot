@@ -25,23 +25,23 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         } else if (update.hasMessage() && update.getMessage().hasText()) {
             String command = message.getText();
-             if("/most_ratings".equals(command)){
-                 adminReportHandler.handleMostRatingsCommand(message, sendMessage);
+            if("/most_ratings".equals(command)){
+                adminReportHandler.handleMostRatingsCommand(message, sendMessage);
 
             }else if("/most_question".equals(command)){
-                 adminReportHandler.handleMostQuestionCommand(message, sendMessage);
+                adminReportHandler.handleMostQuestionCommand(message, sendMessage);
 
             }else if("/most_response".equals(command)){
-                 adminReportHandler.handleMostResponseCommand(message, sendMessage);
+                adminReportHandler.handleMostResponseCommand(message, sendMessage);
 
             }else if("/height_ratings".equals(command)) {
-                 adminReportHandler.handleHighestRatingsCommand(message, sendMessage);
+                adminReportHandler.handleHighestRatingsCommand(message, sendMessage);
 
             }else if ("/slays".equals(command)) {
-                 adminReportHandler.SlaysReportCommand(message, sendMessage);
+                adminReportHandler.SlaysReportCommand(message, sendMessage);
 
             }else if ("/register".equals(command)) {
-                 userCommands.RegisterCommand(message,sendMessage);
+                userCommands.RegisterCommand(message,sendMessage);
 
             }else if("/unregister".equals(command)){
                 userCommands.UnregisterCommand(message,sendMessage);
