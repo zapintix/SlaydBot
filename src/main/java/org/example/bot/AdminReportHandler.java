@@ -76,6 +76,7 @@ public class AdminReportHandler {
                 e.printStackTrace();
             }
         }
+
     }
 
     public void handleMostQuestionCommand(Message message, SendMessage sendMessage) {
