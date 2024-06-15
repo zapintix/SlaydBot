@@ -51,9 +51,5 @@ public class KeyboardBuilder {
         replyKeyboardMarkup.setKeyboard(keyboard);
         return replyKeyboardMarkup;
     }
-
-
-
-
 }
 
